@@ -35,27 +35,41 @@
             align-items: center;
             gap: 12px;
         }
+        /* Starts offset by half the name's width, so the icon sits centered on its own.
+           The script sets --intro-shift; it stays 0 without JS, which just shows the final lockup. */
+        .intro-splash-mark {
+            display: flex;
+            transform: translateX(var(--intro-shift, 0px));
+            animation: intro-splash-move 0.8s ease-in-out 1.5s both;
+        }
         .intro-splash-logo {
             width: 64px;
             height: 64px;
-            animation: intro-splash-logo-in 2s ease-out both;
+            animation: intro-splash-logo-in 1.2s ease-out both;
         }
         .intro-splash-name {
             margin: 0;
+            padding-right: 4px;
             color: #000000;
             font-family: "Atkinson Hyperlegible", "Helvetica Neue", sans-serif;
             font-size: 48px;
             font-weight: 900;
             line-height: 1;
-            animation: intro-splash-name-in 2s ease-out both;
+            white-space: nowrap;
+            clip-path: inset(0 100% 0 0);
+            animation: intro-splash-reveal 0.8s ease-out 2.3s both;
         }
         @keyframes intro-splash-logo-in {
-            from { opacity: 0; transform: scale(0.92); filter: blur(8px); }
+            from { opacity: 0; transform: scale(1.5); filter: blur(8px); }
             to   { opacity: 1; transform: scale(1); filter: blur(0); }
         }
-        @keyframes intro-splash-name-in {
-            from { opacity: 0; }
-            to   { opacity: 1; }
+        @keyframes intro-splash-move {
+            from { transform: translateX(var(--intro-shift, 0px)); }
+            to   { transform: translateX(0); }
+        }
+        @keyframes intro-splash-reveal {
+            from { clip-path: inset(0 100% 0 0); }
+            to   { clip-path: inset(0 0 0 0); }
         }
         @keyframes intro-splash-out {
             from { opacity: 1; }
@@ -67,8 +81,10 @@
 <body>
     <div id="intro-splash" class="intro-splash" aria-hidden="true">
         <div class="intro-splash-lockup">
-            <img class="intro-splash-logo" src="/showcard-mark.svg" alt="" width="64" height="64">
-            <h1 class="intro-splash-name">ShowCard</h1>
+            <div class="intro-splash-mark">
+                <img class="intro-splash-logo" src="/showcard-mark.svg" alt="" width="64" height="64">
+            </div>
+            <h1 id="intro-splash-name" class="intro-splash-name">ShowCard</h1>
         </div>
     </div>
     <script>
@@ -84,9 +100,19 @@
                 return;
             }
             try { sessionStorage.setItem('showcard-intro-seen', '1'); } catch (e) {}
-            // 2s fade-in, 1s hold, then a 1s fade-out before removal.
-            setTimeout(function () { splash.classList.add('is-leaving'); }, 3000);
-            setTimeout(function () { splash.remove(); }, 4000);
+            // Icon comes in (0-1.2s), moves left (1.5-2.3s), name reveals (2.3-3.1s).
+            // Hold until 4s, fade out over 1s, then remove.
+            var name = document.getElementById('intro-splash-name');
+            // Half of the name plus the 12px lockup gap, so the icon starts centered on its own.
+            // Measured again once the font is ready, since the fallback font is wider.
+            var setShift = function () {
+                if (name) splash.style.setProperty('--intro-shift', ((name.offsetWidth + 12) / 2) + 'px');
+            };
+            setShift();
+            window.addEventListener('load', setShift);
+            if (document.fonts) document.fonts.addEventListener('loadingdone', setShift);
+            setTimeout(function () { splash.classList.add('is-leaving'); }, 4000);
+            setTimeout(function () { splash.remove(); }, 5000);
         })();
     </script>
     <div id="root"></div>
