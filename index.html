@@ -24,7 +24,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background-color: #f7f5f0;
+            background-color: var(--splash-bg, #f7f5f0);
             pointer-events: none;
         }
         .intro-splash.is-leaving {
@@ -42,15 +42,19 @@
             transform: translateX(var(--intro-shift, 0px));
             animation: intro-splash-move 0.8s ease-in-out 1.5s both;
         }
+        /* The mark is drawn as a mask so it takes the saved accent color, like the header icon. */
         .intro-splash-logo {
             width: 64px;
             height: 64px;
+            background-color: var(--splash-accent, #FACC15);
+            -webkit-mask: url(/showcard-mark.svg) center / contain no-repeat;
+            mask: url(/showcard-mark.svg) center / contain no-repeat;
             animation: intro-splash-logo-in 1.2s ease-out both;
         }
         .intro-splash-name {
             margin: 0;
             padding-right: 4px;
-            color: #000000;
+            color: var(--splash-fg, #000000);
             font-family: "Atkinson Hyperlegible", "Helvetica Neue", sans-serif;
             font-size: 48px;
             font-weight: 900;
@@ -82,7 +86,7 @@
     <div id="intro-splash" class="intro-splash" aria-hidden="true">
         <div class="intro-splash-lockup">
             <div class="intro-splash-mark">
-                <img class="intro-splash-logo" src="/showcard-mark.svg" alt="" width="64" height="64">
+                <div class="intro-splash-logo" aria-hidden="true"></div>
             </div>
             <h1 id="intro-splash-name" class="intro-splash-name">ShowCard</h1>
         </div>
@@ -99,6 +103,19 @@
                 splash.remove();
                 return;
             }
+            // Follow the color mode and accent the visitor saved in the app. Defaults match a new visit.
+            var modes = {
+                light: { bg: '#f7f5f0', fg: '#000000' },
+                dark: { bg: '#121212', fg: '#f1f1ed' },
+                highContrast: { bg: '#000000', fg: '#ffef00' }
+            };
+            var prefs = null;
+            try { prefs = JSON.parse(localStorage.getItem('visio_prefs')); } catch (e) {}
+            var mode = prefs && modes[prefs.themeMode] ? modes[prefs.themeMode] : modes.light;
+            var accent = prefs && typeof prefs.accentColor === 'string' ? prefs.accentColor : '#FACC15';
+            splash.style.setProperty('--splash-bg', mode.bg);
+            splash.style.setProperty('--splash-fg', mode.fg);
+            splash.style.setProperty('--splash-accent', accent);
             try { sessionStorage.setItem('showcard-intro-seen', '1'); } catch (e) {}
             // Icon comes in (0-1.2s), moves left (1.5-2.3s), name reveals (2.3-3.1s).
             // Hold until 4s, fade out over 1s, then remove.
