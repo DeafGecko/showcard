@@ -17,10 +17,78 @@
         .high-contrast-text {
             color: #ffef00;
         }
+        .intro-splash {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f7f5f0;
+            pointer-events: none;
+        }
+        .intro-splash.is-leaving {
+            animation: intro-splash-out 1s ease-in both;
+        }
+        .intro-splash-lockup {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .intro-splash-logo {
+            width: 64px;
+            height: 64px;
+            animation: intro-splash-logo-in 2s ease-out both;
+        }
+        .intro-splash-name {
+            margin: 0;
+            color: #000000;
+            font-family: "Atkinson Hyperlegible", "Helvetica Neue", sans-serif;
+            font-size: 48px;
+            font-weight: 900;
+            line-height: 1;
+            animation: intro-splash-name-in 2s ease-out both;
+        }
+        @keyframes intro-splash-logo-in {
+            from { opacity: 0; transform: scale(0.92); filter: blur(8px); }
+            to   { opacity: 1; transform: scale(1); filter: blur(0); }
+        }
+        @keyframes intro-splash-name-in {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+        @keyframes intro-splash-out {
+            from { opacity: 1; }
+            to   { opacity: 0; }
+        }
     </style>
     <link rel="stylesheet" href="/index.css">
 </head>
 <body>
+    <div id="intro-splash" class="intro-splash" aria-hidden="true">
+        <div class="intro-splash-lockup">
+            <img class="intro-splash-logo" src="/showcard-mark.svg" alt="" width="64" height="64">
+            <h1 class="intro-splash-name">ShowCard</h1>
+        </div>
+    </div>
+    <script>
+        // Plays the intro once per browser session. Skipped entirely for reduced motion.
+        (function () {
+            var splash = document.getElementById('intro-splash');
+            if (!splash) return;
+            var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            var seen = false;
+            try { seen = sessionStorage.getItem('showcard-intro-seen') === '1'; } catch (e) {}
+            if (reduceMotion || seen) {
+                splash.remove();
+                return;
+            }
+            try { sessionStorage.setItem('showcard-intro-seen', '1'); } catch (e) {}
+            // 2s fade-in, 1s hold, then a 1s fade-out before removal.
+            setTimeout(function () { splash.classList.add('is-leaving'); }, 3000);
+            setTimeout(function () { splash.remove(); }, 4000);
+        })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
 </body>
